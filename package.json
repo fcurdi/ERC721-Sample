@@ -1,0 +1,6 @@
+{
+    "name": "truffle-project",
+    "dependencies": {
+        "@openzeppelin/contracts": "^4.3.2"
+    }
+}

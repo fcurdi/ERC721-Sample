@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -28,9 +28,9 @@ contract MyNFT is IERC721 {
     ///  checks if `_to` is a smart contract (code size > 0). If so, it calls
     ///  `onERC721Received` on `_to` and throws if the return value is not
     ///  `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`.
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
+    /// @param from The current owner of the NFT
+    /// @param to The new owner
+    /// @param tokenId The NFT to transfer
     /// @param data Additional data with no specified format, sent in call to `_to`
     function safeTransferFrom(
         address from,
@@ -44,9 +44,9 @@ contract MyNFT is IERC721 {
     /// @notice Transfers the ownership of an NFT from one address to another address
     /// @dev This works identically to the other function with an extra data parameter,
     ///  except this function just sets data to "".
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
+    /// @param from The current owner of the NFT
+    /// @param to The new owner
+    /// @param tokenId The NFT to transfer
     function safeTransferFrom(
         address from,
         address to,
@@ -62,9 +62,9 @@ contract MyNFT is IERC721 {
     ///  operator, or the approved address for this NFT. Throws if `_from` is
     ///  not the current owner. Throws if `_to` is the zero address. Throws if
     ///  `_tokenId` is not a valid NFT.
-    /// @param _from The current owner of the NFT
-    /// @param _to The new owner
-    /// @param _tokenId The NFT to transfer
+    /// @param from The current owner of the NFT
+    /// @param to The new owner
+    /// @param tokenId The NFT to transfer
     function transferFrom(
         address from,
         address to,
@@ -77,8 +77,8 @@ contract MyNFT is IERC721 {
     /// @dev The zero address indicates there is no approved address.
     ///  Throws unless `msg.sender` is the current NFT owner, or an authorized
     ///  operator of the current owner.
-    /// @param _approved The new approved NFT controller
-    /// @param _tokenId The NFT to approve
+    /// @param to The new approved NFT controller
+    /// @param tokenId The NFT to approve
     function approve(address to, uint256 tokenId) external {
         // TODO
     }
@@ -87,7 +87,7 @@ contract MyNFT is IERC721 {
     ///  all of `msg.sender`'s assets
     /// @dev Emits the ApprovalForAll event. The contract MUST allow
     ///  multiple operators per owner.
-    /// @param _operator Address to add to the set of authorized operators
+    /// @param operator Address to add to the set of authorized operators
     /// @param _approved True if the operator is approved, false to revoke approval
     function setApprovalForAll(address operator, bool _approved) external {
         // TODO
@@ -95,8 +95,8 @@ contract MyNFT is IERC721 {
 
     /// @notice Get the approved address for a single NFT
     /// @dev Throws if `_tokenId` is not a valid NFT.
-    /// @param _tokenId The NFT to find the approved address for
-    /// @return The approved address for this NFT, or the zero address if there is none
+    /// @param tokenId The NFT to find the approved address for
+    /// @return operator The approved address for this NFT, or the zero address if there is none
     function getApproved(uint256 tokenId)
         external
         view
@@ -106,8 +106,8 @@ contract MyNFT is IERC721 {
     }
 
     /// @notice Query if an address is an authorized operator for another address
-    /// @param _owner The address that owns the NFTs
-    /// @param _operator The address that acts on behalf of the owner
+    /// @param owner The address that owns the NFTs
+    /// @param operator The address that acts on behalf of the owner
     /// @return True if `_operator` is an approved operator for `_owner`, false otherwise
     function isApprovedForAll(address owner, address operator)
         external
@@ -118,7 +118,7 @@ contract MyNFT is IERC721 {
     }
 
     /// @notice Query if a contract implements an interface
-    /// @param interfaceID The interface identifier, as specified in ERC-165
+    /// @param interfaceId The interface identifier, as specified in ERC-165
     /// @dev Interface identification is specified in ERC-165. This function
     ///  uses less than 30,000 gas.
     /// @return `true` if the contract implements `interfaceID` and
