@@ -23,8 +23,7 @@ contract MyNFT is IERC721 {
     }
 
     function ownerOf(uint256 tokenId) external view returns (address owner) {
-        owner = _owners[tokenId];
-        require(owner != address(0));
+        owner = _ownerOf(tokenId);
     }
 
     function safeTransferFrom(
@@ -49,32 +48,20 @@ contract MyNFT is IERC721 {
         address to,
         uint256 tokenId
     ) external {
-        // TODO validate from, to not zero addresses?
-        address owner = _owners[tokenId];
-        require(owner != address(0), "NFT is not valid");
-        require(
-            msg.sender == owner ||
-                _operators[owner][msg.sender] ||
-                _approvedAddresses[tokenId] == msg.sender,
-            "Sender is not authorized to make a transfer"
-        );
-        require(from == owner, "From address must be the NFT owner");
-        require(to != address(0));
-        _owners[tokenId] = to;
-        // TODO refactor this with _safeTransferFrom.
+        _transfer(from, to, tokenId);
     }
 
     function approve(address to, uint256 tokenId) external {
-        address owner = _owners[tokenId];
+        address owner = _ownerOf(tokenId);
         require(
-            msg.sender == owner || _operators[owner][msg.sender],
+            msg.sender == owner || _approvedOperator(owner, msg.sender),
             "Sender is not owner nor operator"
         );
         _approvedAddresses[tokenId] = to;
     }
 
     function setApprovalForAll(address operator, bool _approved) external {
-        // TODO check that operator is not zero address?
+        require(operator != address(0), "Invalid address"); // not in the 721 spec
         _operators[msg.sender][operator] = _approved;
     }
 
@@ -83,9 +70,7 @@ contract MyNFT is IERC721 {
         view
         returns (address operator)
     {
-        address owner = _owners[tokenId];
-        require(owner != address(0), "NFT is not valid");
-        operator = _approvedAddresses[tokenId];
+        operator = _approvedAddressOf(tokenId);
     }
 
     function isApprovedForAll(address owner, address operator)
@@ -93,8 +78,7 @@ contract MyNFT is IERC721 {
         view
         returns (bool)
     {
-        // TODO check that operator is not zero address?
-        return _operators[owner][operator];
+        return _approvedOperator(owner, operator);
     }
 
     /// @notice Query if a contract implements an interface
@@ -112,34 +96,31 @@ contract MyNFT is IERC721 {
         // IERC165
     }
 
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) private {
+        address owner = _ownerOf(tokenId);
+        require(
+            msg.sender == owner ||
+                _approvedOperator(owner, msg.sender) ||
+                _approvedAddressOf(tokenId) == msg.sender,
+            "Sender is not authorized to make a transfer"
+        );
+        require(from == owner, "From address must be the NFT owner");
+        require(to != address(0), "Invalid address");
+        _owners[tokenId] = to;
+    }
+
     function _safeTransferFrom(
         address from,
         address to,
         uint256 tokenId,
         bytes memory data
     ) private {
-        // TODO validate from, to not zero addresses?
-        address owner = _owners[tokenId];
-        require(owner != address(0), "NFT is not valid");
-        require(
-            msg.sender == owner ||
-                _operators[owner][msg.sender] ||
-                _approvedAddresses[tokenId] == msg.sender,
-            "Sender is not authorized to make a transfer"
-        );
-        require(from == owner, "From address must be the NFT owner");
-        require(to != address(0));
-        _owners[tokenId] = to;
-
-        // check if address is smart contract (code size > 0)
-        uint256 size;
-        assembly {
-            size := extcodesize(to)
-        }
-        bool isSmartContract = size > 0;
-        //
-
-        if (isSmartContract) {
+        _transfer(from, to, tokenId);
+        if (_isSmartContract(to)) {
             IERC721Receiver receiver = IERC721Receiver(to);
             bytes4 result = receiver.onERC721Received(
                 msg.sender,
@@ -152,5 +133,36 @@ contract MyNFT is IERC721 {
                 "To address rejected the transfer"
             );
         }
+    }
+
+    function _isSmartContract(address addr) private view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+        return size > 0;
+    }
+
+    function _approvedOperator(address owner, address operator)
+        private
+        view
+        returns (bool)
+    {
+        return _operators[owner][operator];
+    }
+
+    function _ownerOf(uint256 tokenId) private view returns (address) {
+        address owner = _owners[tokenId];
+        require(owner != address(0), "NFT is not valid");
+        return owner;
+    }
+
+    function _approvedAddressOf(uint256 tokenId)
+        private
+        view
+        returns (address)
+    {
+        _ownerOf(tokenId); // validate tokenId
+        return _approvedAddresses[tokenId];
     }
 }
