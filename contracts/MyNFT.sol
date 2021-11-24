@@ -17,6 +17,13 @@ contract MyNFT is IERC721 {
     /// The zero address indicates there is no approved address.
     mapping(uint256 => address) _approvedAddresses;
 
+    // for ERC165
+    mapping(bytes4 => bool) _supportedInterfaces;
+
+    constructor() {
+        _declareSupportedInterfaces();
+    }
+
     function balanceOf(address owner) external view returns (uint256 balance) {
         require(owner != address(0), "Invalid address");
         balance = _balances[owner];
@@ -81,19 +88,12 @@ contract MyNFT is IERC721 {
         return _approvedOperator(owner, operator);
     }
 
-    /// @notice Query if a contract implements an interface
-    /// @param interfaceId The interface identifier, as specified in ERC-165
-    /// @dev Interface identification is specified in ERC-165. This function
-    ///  uses less than 30,000 gas.
-    /// @return `true` if the contract implements `interfaceID` and
-    ///  `interfaceID` is not 0xffffffff, `false` otherwise
     function supportsInterface(bytes4 interfaceId)
         external
         view
         returns (bool)
     {
-        // TODO
-        // IERC165
+        return _supportedInterfaces[interfaceId];
     }
 
     function _transfer(
@@ -164,5 +164,27 @@ contract MyNFT is IERC721 {
     {
         _ownerOf(tokenId); // validate tokenId
         return _approvedAddresses[tokenId];
+    }
+
+    function _declareSupportedInterfaces() private {
+        // IERC165
+        _supportedInterfaces[this.supportsInterface.selector] = true;
+
+        // IERC721
+        _supportedInterfaces[
+            this.balanceOf.selector ^
+                this.ownerOf.selector ^
+                bytes4(
+                    keccak256("safeTransferFrom(address,address,uint256,bytes)")
+                ) ^
+                bytes4(keccak256("safeTransferFrom(address,address,uint256)")) ^
+                this.transferFrom.selector ^
+                this.approve.selector ^
+                this.getApproved.selector ^
+                this.setApprovalForAll.selector ^
+                this.isApprovedForAll.selector
+        ] = true;
+
+        _supportedInterfaces[0xffffffff] = false;
     }
 }
