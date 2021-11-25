@@ -4,6 +4,9 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+
+// TODO ERC721Enumerable?
 
 /** TODO
 - Create NFTs
@@ -12,8 +15,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 TransferEvent: emit when NFTs are created (`from` == 0) and destroyed (`to` == 0).
  */
 
-//TODO ERC721Metadata
-contract MyNFT is IERC721 {
+contract MyNFT is IERC165, IERC721, IERC721Metadata {
     mapping(address => uint256) _balances;
 
     /// The zero address indicates an invalid NFT.
@@ -29,6 +31,24 @@ contract MyNFT is IERC721 {
 
     constructor() {
         _declareSupportedInterfaces();
+    }
+
+    function name() external pure returns (string memory) {
+        return "MY NFT";
+    }
+
+    function symbol() external pure returns (string memory) {
+        return "MNFT";
+    }
+
+    /// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+    /// @dev URIs are defined in RFC
+    ///  3986. The URI may point to a JSON file that conforms to the "ERC721
+    ///  Metadata JSON Schema".
+    function tokenURI(uint256 tokenId) external view returns (string memory) {
+        _ownerOf(tokenId); // validate tokenId
+
+        // TODO
     }
 
     function balanceOf(address owner) external view returns (uint256 balance) {
@@ -194,6 +214,11 @@ contract MyNFT is IERC721 {
                 this.getApproved.selector ^
                 this.setApprovalForAll.selector ^
                 this.isApprovedForAll.selector
+        ] = true;
+
+        // IERC721Metadata
+        _supportedInterfaces[
+            this.name.selector ^ this.symbol.selector ^ this.tokenURI.selector
         ] = true;
 
         // Invalid acording to IERC165
