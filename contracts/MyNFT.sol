@@ -5,7 +5,14 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-//TODO emit events, ERC721Metadata
+/** TODO
+- Create NFTs
+- Destroy NFTs (assign to zero address)
+
+TransferEvent: emit when NFTs are created (`from` == 0) and destroyed (`to` == 0).
+ */
+
+//TODO ERC721Metadata
 contract MyNFT is IERC721 {
     mapping(address => uint256) _balances;
 
@@ -65,11 +72,13 @@ contract MyNFT is IERC721 {
             "Sender is not owner nor operator"
         );
         _approvedAddresses[tokenId] = to;
+        emit Approval(owner, to, tokenId);
     }
 
     function setApprovalForAll(address operator, bool _approved) external {
         require(operator != address(0), "Invalid address"); // not in the 721 spec
         _operators[msg.sender][operator] = _approved;
+        emit ApprovalForAll(msg.sender, operator, _approved);
     }
 
     function getApproved(uint256 tokenId)
@@ -111,6 +120,8 @@ contract MyNFT is IERC721 {
         require(from == owner, "From address must be the NFT owner");
         require(to != address(0), "Invalid address");
         _owners[tokenId] = to;
+        _approvedAddresses[tokenId] = address(0);
+        emit Transfer(from, to, tokenId);
     }
 
     function _safeTransferFrom(
@@ -185,6 +196,7 @@ contract MyNFT is IERC721 {
                 this.isApprovedForAll.selector
         ] = true;
 
+        // Invalid acording to IERC165
         _supportedInterfaces[0xffffffff] = false;
     }
 }
