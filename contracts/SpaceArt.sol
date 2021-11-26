@@ -6,16 +6,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-// TODO ERC721Enumerable?
+// TODO ERC721Enumerable
 
-/** TODO
-- Create NFTs
-- Destroy NFTs (assign to zero address)
-
-TransferEvent: emit when NFTs are created (`from` == 0) and destroyed (`to` == 0).
- */
-
-contract MyNFT is IERC165, IERC721, IERC721Metadata {
+contract SpaceArt is IERC165, IERC721, IERC721Metadata {
     mapping(address => uint256) _balances;
 
     /// The zero address indicates an invalid NFT.
@@ -29,26 +22,46 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata {
     // for ERC165
     mapping(bytes4 => bool) _supportedInterfaces;
 
+    mapping(uint256 => string) _tokenUris;
+
+    uint256 private nextTokenId;
+    uint256 private maxTokensCreated = 5;
+
     constructor() {
         _declareSupportedInterfaces();
     }
 
+    function create(string memory tokenUri) public {
+        require(nextTokenId < maxTokensCreated, "All tokens already created");
+        address tokenOwner = msg.sender;
+        uint256 tokenId = nextTokenId;
+        _balances[tokenOwner]++;
+        _owners[tokenId] = tokenOwner;
+        _tokenUris[tokenId] = tokenUri;
+        nextTokenId++;
+        emit Transfer(address(0), tokenOwner, tokenId);
+    }
+
+    function destroy(uint256 tokenId) public {
+        address tokenOwner = _ownerOf(tokenId);
+        _balances[tokenOwner]--;
+        _owners[tokenId] = address(0);
+        _approvedAddresses[tokenId] = address(0);
+        _tokenUris[tokenId] = "";
+        emit Transfer(tokenOwner, address(0), tokenId);
+    }
+
     function name() external pure returns (string memory) {
-        return "MY NFT";
+        return "Space Art";
     }
 
     function symbol() external pure returns (string memory) {
-        return "MNFT";
+        return "SART";
     }
 
-    /// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-    /// @dev URIs are defined in RFC
-    ///  3986. The URI may point to a JSON file that conforms to the "ERC721
-    ///  Metadata JSON Schema".
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         _ownerOf(tokenId); // validate tokenId
-
-        // TODO
+        return _tokenUris[tokenId];
     }
 
     function balanceOf(address owner) external view returns (uint256 balance) {
