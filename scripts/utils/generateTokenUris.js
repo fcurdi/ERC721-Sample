@@ -9,7 +9,7 @@ async function generateTokenUris() {
     // dir = ["nft1", "nft2", ...]
     const metadataFilePath = `${basePath}/${dir}/metadata.json`;
     const metadata = readJsonFile(metadataFilePath);
-    if (metadata.image === "") {
+    if (!metadata.image) {
       // upload images to ipfs and update metadata.json file
       const imageHash = await pinFileToIPFS(
         `${basePath}/${dir}/img.jpeg`,
@@ -19,8 +19,8 @@ async function generateTokenUris() {
       writeJsonFile(metadataFilePath, metadata);
     }
     const tokenUriFilePath = `${basePath}/${dir}/tokenUri.json`;
-    let tokenUri = readJsonFile(tokenUriFilePath)?.value || "";
-    if (tokenUri === "") {
+    let tokenUri = readJsonFile(tokenUriFilePath)?.value;
+    if (!tokenUri) {
       // upload metadata json to ipfs and store tokenUri
       const metadataHash = await pinJSONToIPFS(metadata, `${dir}-metadata`);
       tokenUri = `https://gateway.pinata.cloud/ipfs/${metadataHash}`;

@@ -23,7 +23,7 @@ const pinFileToIPFS = async (filePath, name) => {
     });
     return response.data.IpfsHash;
   } catch (e) {
-    throw new Error("Error uploading file to IPFS");
+    throw new Error(`Error uploading file to IPFS: ${e.message}`);
   }
 };
 
@@ -46,7 +46,7 @@ const pinJSONToIPFS = async (json, name) => {
     });
     return response.data.IpfsHash;
   } catch (e) {
-    throw new Error("Error uploading json to IPFS");
+    throw new Error(`Error uploading json to IPFS: ${e.message}`);
   }
 };
 
