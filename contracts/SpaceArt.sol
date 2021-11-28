@@ -9,20 +9,20 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 // TODO ERC721Enumerable
 
 contract SpaceArt is IERC165, IERC721, IERC721Metadata {
-    mapping(address => uint256) _balances;
+    mapping(address => uint256) private _balances;
 
     /// The zero address indicates an invalid NFT.
-    mapping(uint256 => address) _owners;
+    mapping(uint256 => address) private _owners;
 
-    mapping(address => mapping(address => bool)) _operators;
+    mapping(address => mapping(address => bool)) private _operators;
 
     /// The zero address indicates there is no approved address.
-    mapping(uint256 => address) _approvedAddresses;
+    mapping(uint256 => address) private _approvedAddresses;
 
     // for ERC165
-    mapping(bytes4 => bool) _supportedInterfaces;
+    mapping(bytes4 => bool) private _supportedInterfaces;
 
-    mapping(uint256 => string) _tokenUris;
+    mapping(uint256 => string) private _tokenUris;
 
     uint256 private nextTokenId;
     uint256 private maxTokensCreated = 5;
@@ -31,7 +31,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
         _declareSupportedInterfaces();
     }
 
-    function create(string memory tokenUri) public {
+    function create(string calldata tokenUri) external {
         require(nextTokenId < maxTokensCreated, "All tokens already created");
         address tokenOwner = msg.sender;
         uint256 tokenId = nextTokenId;
@@ -42,7 +42,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
         emit Transfer(address(0), tokenOwner, tokenId);
     }
 
-    function destroy(uint256 tokenId) public {
+    function destroy(uint256 tokenId) external {
         address tokenOwner = _ownerOf(tokenId);
         _balances[tokenOwner]--;
         _owners[tokenId] = address(0);
