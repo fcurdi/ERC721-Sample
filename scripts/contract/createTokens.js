@@ -9,12 +9,14 @@ const execute = async () => {
     SpaceArt.abi,
     SpaceArt.networks[networkId].address
   );
-  const account = (await web3.eth.getAccounts())[0];
+  const accounts = await web3.eth.getAccounts();
   const tokenUris = await generateTokenUris();
   for (const tokenUri of tokenUris) {
+    const randomAccountIndex = Math.floor(Math.random() * 10)  % accounts.length;
+    const account = accounts[randomAccountIndex];
     await contract.methods
       .create(tokenUri)
-      .send({ from: account, gas: 200000 });
+      .send({ from: account, gas: 300000 });
   }
 };
 
