@@ -5,10 +5,10 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-// TODO ERC721Enumerable
-
-contract SpaceArt is IERC165, IERC721, IERC721Metadata {
+contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     mapping(address => uint256) private _balances;
 
     /// The zero address indicates an invalid NFT.
@@ -19,26 +19,30 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
     /// The zero address indicates there is no approved address.
     mapping(uint256 => address) private _approvedAddresses;
 
-    // for ERC165
     mapping(bytes4 => bool) private _supportedInterfaces;
 
     mapping(uint256 => string) private _tokenUris;
 
-    uint256 private nextTokenId;
-    uint256 private maxTokensCreated = 5;
+    mapping(address => uint256[]) _tokenIdsByOwner;
+
+    uint256 private _nextTokenId;
+    uint256 private constant _maxTokens = 7;
+    uint256 private _validTokens;
 
     constructor() {
         _declareSupportedInterfaces();
     }
 
     function create(string calldata tokenUri) external {
-        require(nextTokenId < maxTokensCreated, "All tokens already created");
+        require(_nextTokenId < _maxTokens, "All tokens already created");
         address tokenOwner = msg.sender;
-        uint256 tokenId = nextTokenId;
+        uint256 tokenId = _nextTokenId;
         _balances[tokenOwner]++;
         _owners[tokenId] = tokenOwner;
         _tokenUris[tokenId] = tokenUri;
-        nextTokenId++;
+        _addIndexedTokenId(tokenId, tokenOwner);
+        _nextTokenId++;
+        _validTokens++;
         emit Transfer(address(0), tokenOwner, tokenId);
     }
 
@@ -48,6 +52,8 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
         _owners[tokenId] = address(0);
         _approvedAddresses[tokenId] = address(0);
         _tokenUris[tokenId] = "";
+        _removeIndexedTokenId(tokenId, tokenOwner);
+        _validTokens--;
         emit Transfer(tokenOwner, address(0), tokenId);
     }
 
@@ -65,8 +71,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
     }
 
     function balanceOf(address owner) external view returns (uint256 balance) {
-        require(owner != address(0), "Invalid address");
-        balance = _balances[owner];
+        return _balanceOf(owner);
     }
 
     function ownerOf(uint256 tokenId) external view returns (address owner) {
@@ -138,6 +143,31 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
         return _supportedInterfaces[interfaceId];
     }
 
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply();
+    }
+
+    // since tokenIds are autoincremental, tokenId == index
+    function tokenByIndex(uint256 index) external view returns (uint256) {
+        require(index < _totalSupply(), "Invalid index");
+        _ownerOf(index); // validate tokenId
+        return index;
+    }
+
+    function tokenOfOwnerByIndex(address owner, uint256 index)
+        external
+        view
+        returns (uint256 tokenId)
+    {
+        require(index < _balanceOf(owner), "Invalid index for owner");
+        return _tokenIdsByOwner[owner][index];
+    }
+
+    function _balanceOf(address owner) private view returns (uint256) {
+        require(owner != address(0), "Invalid address");
+        return _balances[owner];
+    }
+
     function _transfer(
         address from,
         address to,
@@ -154,6 +184,8 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
         require(to != address(0), "Invalid address");
         _owners[tokenId] = to;
         _approvedAddresses[tokenId] = address(0);
+        _removeIndexedTokenId(tokenId, owner);
+        _addIndexedTokenId(tokenId, to);
         emit Transfer(from, to, tokenId);
     }
 
@@ -234,7 +266,35 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata {
             this.name.selector ^ this.symbol.selector ^ this.tokenURI.selector
         ] = true;
 
+        // IERC721Enumerable
+        _supportedInterfaces[
+            this.totalSupply.selector ^
+                this.tokenByIndex.selector ^
+                this.tokenOfOwnerByIndex.selector
+        ] = true;
+
         // Invalid acording to IERC165
         _supportedInterfaces[0xffffffff] = false;
+    }
+
+    function _totalSupply() private view returns (uint256) {
+        return _validTokens;
+    }
+
+    function _addIndexedTokenId(uint256 tokenId, address owner) private {
+        uint256[] storage tokenIds = _tokenIdsByOwner[owner];
+        tokenIds.push(tokenId);
+    }
+
+    function _removeIndexedTokenId(uint256 tokenId, address owner) private {
+        uint256[] storage tokenIds = _tokenIdsByOwner[owner];
+        uint256 index;
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            if (tokenId == tokenIds[i]) {
+                index = i;
+            }
+        }
+        tokenIds[index] = tokenIds[tokenIds.length - 1];
+        tokenIds.pop();
     }
 }
