@@ -23,7 +23,8 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     mapping(uint256 => string) private _tokenUris;
 
-    mapping(address => uint256[]) _tokenIdsByOwner;
+    uint256[] private _indexedTokenIds;
+    mapping(address => uint256[]) private _indexedTokenIdsByOwner;
 
     uint256 private _nextTokenId;
     uint256 private constant _maxTokens = 7;
@@ -40,6 +41,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         _balances[tokenOwner]++;
         _owners[tokenId] = tokenOwner;
         _tokenUris[tokenId] = tokenUri;
+        _indexedTokenIds.push(tokenId);
         _addIndexedTokenId(tokenId, tokenOwner);
         _nextTokenId++;
         _validTokens++;
@@ -48,11 +50,13 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     function destroy(uint256 tokenId) external {
         address tokenOwner = _ownerOf(tokenId);
+        require(tokenOwner == msg.sender, "Only owner can destroy its NFT");
         _balances[tokenOwner]--;
         _owners[tokenId] = address(0);
         _approvedAddresses[tokenId] = address(0);
         _tokenUris[tokenId] = "";
-        _removeIndexedTokenId(tokenId, tokenOwner);
+        _removeTokenIdFromArray(tokenId, _indexedTokenIds);
+        _removeIndexedTokenIdByOwner(tokenId, tokenOwner);
         _validTokens--;
         emit Transfer(tokenOwner, address(0), tokenId);
     }
@@ -147,11 +151,9 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         return _totalSupply();
     }
 
-    // since tokenIds are autoincremental, tokenId == index
     function tokenByIndex(uint256 index) external view returns (uint256) {
         require(index < _totalSupply(), "Invalid index");
-        _ownerOf(index); // validate tokenId
-        return index;
+        return _indexedTokenIds[index];
     }
 
     function tokenOfOwnerByIndex(address owner, uint256 index)
@@ -160,7 +162,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         returns (uint256 tokenId)
     {
         require(index < _balanceOf(owner), "Invalid index for owner");
-        return _tokenIdsByOwner[owner][index];
+        return _indexedTokenIdsByOwner[owner][index];
     }
 
     function _balanceOf(address owner) private view returns (uint256) {
@@ -184,7 +186,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         require(to != address(0), "Invalid address");
         _owners[tokenId] = to;
         _approvedAddresses[tokenId] = address(0);
-        _removeIndexedTokenId(tokenId, owner);
+        _removeIndexedTokenIdByOwner(tokenId, owner);
         _addIndexedTokenId(tokenId, to);
         emit Transfer(from, to, tokenId);
     }
@@ -282,12 +284,20 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function _addIndexedTokenId(uint256 tokenId, address owner) private {
-        uint256[] storage tokenIds = _tokenIdsByOwner[owner];
-        tokenIds.push(tokenId);
+        uint256[] storage tokenIdsByOwner = _indexedTokenIdsByOwner[owner];
+        tokenIdsByOwner.push(tokenId);
     }
 
-    function _removeIndexedTokenId(uint256 tokenId, address owner) private {
-        uint256[] storage tokenIds = _tokenIdsByOwner[owner];
+    function _removeIndexedTokenIdByOwner(uint256 tokenId, address owner)
+        private
+    {
+        _removeTokenIdFromArray(tokenId, _indexedTokenIdsByOwner[owner]);
+    }
+
+    function _removeTokenIdFromArray(
+        uint256 tokenId,
+        uint256[] storage tokenIds
+    ) private {
         uint256 index;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             if (tokenId == tokenIds[i]) {
