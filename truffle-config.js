@@ -25,7 +25,13 @@
 
 require("dotenv").config();
 const HDWalletProvider = require("truffle-hdwallet-provider");
-const { METAMASK_MNEMONIC, INFURA_URL } = process.env;
+const {
+  METAMASK_PK_1,
+  METAMASK_PK_2,
+  METAMASK_PK_3,
+  METAMASK_PK_4,
+  INFURA_URL,
+} = process.env;
 
 module.exports = {
   /**
@@ -51,9 +57,22 @@ module.exports = {
       network_id: "*", // Any network (default: none)
     },
     rinkeby: {
-      provider: () => new HDWalletProvider(METAMASK_MNEMONIC, INFURA_URL),
+      provider: () => {
+        const privateKeys = [
+          METAMASK_PK_1,
+          METAMASK_PK_2,
+          METAMASK_PK_3,
+          METAMASK_PK_4,
+        ];
+        return new HDWalletProvider(
+          privateKeys,
+          INFURA_URL,
+          0,
+          privateKeys.length
+        );
+      },
       network_id: 4,
-  }
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port

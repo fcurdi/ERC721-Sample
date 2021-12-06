@@ -1,0 +1,112 @@
+Migrations dry-run (simulation)
+===============================
+> Network name:    'rinkeby-fork'
+> Network id:      4
+> Block gas limit: 29999972 (0x1c9c364)
+
+
+1_initial_migration.js
+======================
+
+   Deploying 'Migrations'
+   ----------------------
+   > block number:        9747011
+   > block timestamp:     1638488686
+   > account:             0x3A6b3c423Ab4C6Ae3bC3d69710bE576BC1D1D7C1
+   > balance:             0.299447729256007
+   > gas used:            233854 (0x3917e)
+   > gas price:           2 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000467708 ETH
+
+   -------------------------------------
+   > Total cost:         0.000467708 ETH
+
+
+2_deploy_contracts.js
+=====================
+
+   Deploying 'SpaceArt'
+   --------------------
+   > block number:        9747013
+   > block timestamp:     1638488733
+   > account:             0x3A6b3c423Ab4C6Ae3bC3d69710bE576BC1D1D7C1
+   > balance:             0.295292917256007
+   > gas used:            2049893 (0x1f4765)
+   > gas price:           2 gwei
+   > value sent:          0 ETH
+   > total cost:          0.004099786 ETH
+
+   -------------------------------------
+   > Total cost:         0.004099786 ETH
+
+
+Summary
+=======
+> Total deployments:   2
+> Final cost:          0.004567494 ETH
+
+
+
+
+
+Starting migrations...
+======================
+> Network name:    'rinkeby'
+> Network id:      4
+> Block gas limit: 30000000 (0x1c9c380)
+
+
+1_initial_migration.js
+======================
+
+   Deploying 'Migrations'
+   ----------------------
+   > transaction hash:    0xd38f77641b31d6cb4f3d0e2b38f5fe20e35ae9a7e636c2843dae082960ed8930
+   > Blocks: 2            Seconds: 17
+   > contract address:    0x62f9ba57ddf8f8B9d595b3fD5135E7928747b722
+   > block number:        9747016
+   > block timestamp:     1638488768
+   > account:             0x3A6b3c423Ab4C6Ae3bC3d69710bE576BC1D1D7C1
+   > balance:             0.299545748034641072
+   > gas used:            250154 (0x3d12a)
+   > gas price:           1.477846532 gwei
+   > value sent:          0 ETH
+   > total cost:          0.000369689221365928 ETH
+
+
+   > Saving migration to chain.
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:     0.000369689221365928 ETH
+
+
+2_deploy_contracts.js
+=====================
+
+   Deploying 'SpaceArt'
+   --------------------
+   > transaction hash:    0xe25dac2bf2de824eadcab4b59ac4399239bd65989bd8c4b2d8722769f7cbb0b9
+   > Blocks: 4            Seconds: 61
+   > contract address:    0xfC1110F583cb407914C004577CE5234aa40bca98
+   > block number:        9747024
+   > block timestamp:     1638488888
+   > account:             0x3A6b3c423Ab4C6Ae3bC3d69710bE576BC1D1D7C1
+   > balance:             0.299480074154417001
+   > gas used:            2126493 (0x20729d)
+   > gas price:           1.434266242 gwei
+   > value sent:          0 ETH
+   > total cost:          0.003049957123749306 ETH
+
+
+   > Saving migration to chain.
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:     0.003049957123749306 ETH
+
+
+Summary
+=======
+> Total deployments:   2
+> Final cost:          0.003419646345115234 ETH
+
