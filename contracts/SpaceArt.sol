@@ -242,35 +242,10 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function declareSupportedInterfaces() private {
-        // IERC165
-        supportedInterfaces[this.supportsInterface.selector] = true;
-
-        // IERC721
-        supportedInterfaces[
-            this.balanceOf.selector ^
-                this.ownerOf.selector ^
-                bytes4(
-                    keccak256("safeTransferFrom(address,address,uint256,bytes)")
-                ) ^
-                bytes4(keccak256("safeTransferFrom(address,address,uint256)")) ^
-                this.transferFrom.selector ^
-                this.approve.selector ^
-                this.getApproved.selector ^
-                this.setApprovalForAll.selector ^
-                this.isApprovedForAll.selector
-        ] = true;
-
-        // IERC721Metadata
-        supportedInterfaces[
-            this.name.selector ^ this.symbol.selector ^ this.tokenURI.selector
-        ] = true;
-
-        // IERC721Enumerable
-        supportedInterfaces[
-            this.totalSupply.selector ^
-                this.tokenByIndex.selector ^
-                this.tokenOfOwnerByIndex.selector
-        ] = true;
+        supportedInterfaces[type(IERC165).interfaceId] = true;
+        supportedInterfaces[type(IERC721).interfaceId] = true;
+        supportedInterfaces[type(IERC721Metadata).interfaceId] = true;
+        supportedInterfaces[type(IERC721Enumerable).interfaceId] = true;
 
         // Invalid acording to IERC165
         supportedInterfaces[0xffffffff] = false;
