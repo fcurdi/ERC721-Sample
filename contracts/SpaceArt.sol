@@ -100,14 +100,30 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         address from,
         address to,
         uint256 tokenId
-    ) external {
-        transfer(from, to, tokenId);
+    ) public {
+        address owner = _ownerOf(tokenId);
+        require(
+            msg.sender == owner ||
+                isApprovedForAll(owner, msg.sender) ||
+                getApproved(tokenId) == msg.sender,
+            "Sender is not authorized to make a transfer"
+        );
+        require(from == owner, "From address must be the NFT owner");
+        require(to != address(0), "Invalid address");
+        owners[tokenId] = to;
+        balances[from]--;
+        balances[to]++;
+        approvedAddresses[tokenId] = address(0);
+        emit Approval(owner, address(0), tokenId);
+        removeIndexedTokenIdByOwner(tokenId, owner);
+        addIndexedTokenId(tokenId, to);
+        emit Transfer(from, to, tokenId);
     }
 
     function approve(address to, uint256 tokenId) external {
         address owner = _ownerOf(tokenId);
         require(
-            msg.sender == owner || approvedOperator(owner, msg.sender),
+            msg.sender == owner || isApprovedForAll(owner, msg.sender),
             "Sender is not owner nor operator"
         );
         approvedAddresses[tokenId] = to;
@@ -121,19 +137,20 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function getApproved(uint256 tokenId)
-        external
+        public
         view
         returns (address operator)
     {
-        operator = approvedAddressOf(tokenId);
+        validate(tokenId);
+        operator =  approvedAddresses[tokenId];
     }
 
     function isApprovedForAll(address owner, address operator)
-        external
+        public
         view
         returns (bool)
     {
-        return approvedOperator(owner, operator);
+        return operators[owner][operator];
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -167,34 +184,13 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         return balances[owner];
     }
 
-    function transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) private {
-        address owner = _ownerOf(tokenId);
-        require(
-            msg.sender == owner ||
-                approvedOperator(owner, msg.sender) ||
-                approvedAddressOf(tokenId) == msg.sender,
-            "Sender is not authorized to make a transfer"
-        );
-        require(from == owner, "From address must be the NFT owner");
-        require(to != address(0), "Invalid address");
-        owners[tokenId] = to;
-        approvedAddresses[tokenId] = address(0);
-        removeIndexedTokenIdByOwner(tokenId, owner);
-        addIndexedTokenId(tokenId, to);
-        emit Transfer(from, to, tokenId);
-    }
-
     function _safeTransferFrom(
         address from,
         address to,
         uint256 tokenId,
         bytes memory data
     ) private {
-        transfer(from, to, tokenId);
+        transferFrom(from, to, tokenId);
         if (isSmartContract(to)) {
             IERC721Receiver receiver = IERC721Receiver(to);
             bytes4 result = receiver.onERC721Received(
@@ -218,14 +214,6 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         return size > 0;
     }
 
-    function approvedOperator(address owner, address operator)
-        private
-        view
-        returns (bool)
-    {
-        return operators[owner][operator];
-    }
-
     function _ownerOf(uint256 tokenId) private view returns (address) {
         address owner = owners[tokenId];
         require(owner != address(0), "NFT is not valid");
@@ -234,11 +222,6 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     function validate(uint256 tokenId) private view {
         _ownerOf(tokenId);
-    }
-
-    function approvedAddressOf(uint256 tokenId) private view returns (address) {
-        validate(tokenId);
-        return approvedAddresses[tokenId];
     }
 
     function declareSupportedInterfaces() private {
