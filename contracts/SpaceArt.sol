@@ -22,12 +22,23 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     mapping(uint256 => string) private tokenUris;
 
+    // For enumeration
     uint256[] private tokenIds;
+    mapping(uint256 => uint256) private tokenIdsIndexes;
     mapping(address => uint256[]) private tokenIdsByOwner;
+    mapping(uint256 => uint256) private tokenIdsByOwnerIndexes;
+    //
 
     using Counters for Counters.Counter;
     Counters.Counter private tokenIdCounter;
     uint256 private constant MAX_TOKENS = 7;
+
+    /** TODO
+        - review destroy
+        - refactors
+        - tests
+        - redeploy to rinkeby
+     */
 
     constructor() {
         declareSupportedInterfaces();
@@ -36,26 +47,26 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     function create(string calldata tokenUri) external {
         uint256 tokenId = tokenIdCounter.current();
         require(tokenId < MAX_TOKENS, "All tokens already created");
-        address tokenOwner = msg.sender;
-        balances[tokenOwner]++;
-        owners[tokenId] = tokenOwner;
+        address owner = msg.sender;
+        balances[owner]++;
+        owners[tokenId] = owner;
         tokenUris[tokenId] = tokenUri;
-        tokenIds.push(tokenId);
-        addIndexedTokenId(tokenId, tokenOwner);
+        addEnumerationFor(tokenId);
+        addEnumerationFor(tokenId, owner);
         tokenIdCounter.increment();
-        emit Transfer(address(0), tokenOwner, tokenId);
+        emit Transfer(address(0), owner, tokenId);
     }
 
     function destroy(uint256 tokenId) external {
-        address tokenOwner = ownerOf(tokenId);
-        require(tokenOwner == msg.sender, "Only owner can destroy its NFT");
-        balances[tokenOwner]--;
+        address owner = ownerOf(tokenId);
+        require(owner == msg.sender, "Only owner can destroy its NFT");
+        balances[owner]--;
         owners[tokenId] = address(0);
         approvedAddresses[tokenId] = address(0);
         tokenUris[tokenId] = "";
-        removeIdFromArray(tokenId, tokenIds);
-        removeIndexedTokenIdByOwner(tokenId, tokenOwner);
-        emit Transfer(tokenOwner, address(0), tokenId);
+        removeEnumerationFor(tokenId);
+        removeEnumerationFor(tokenId, owner);
+        emit Transfer(owner, address(0), tokenId);
     }
 
     function name() external pure returns (string memory) {
@@ -120,8 +131,8 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         approvedAddresses[tokenId] = address(0);
         emit Approval(owner, address(0), tokenId);
 
-        removeIndexedTokenIdByOwner(tokenId, owner);
-        addIndexedTokenId(tokenId, to);
+        removeEnumerationFor(tokenId, owner);
+        addEnumerationFor(tokenId, to);
 
         emit Transfer(from, to, tokenId);
     }
@@ -229,24 +240,37 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         supportedInterfaces[0xffffffff] = false;
     }
 
-    function addIndexedTokenId(uint256 tokenId, address owner) private {
-        tokenIdsByOwner[owner].push(tokenId);
+    function addEnumerationFor(uint256 tokenId) private {
+        tokenIdsIndexes[tokenId] = tokenIds.length;
+        tokenIds.push(tokenId);
     }
 
-    function removeIndexedTokenIdByOwner(uint256 tokenId, address owner)
-        private
-    {
-        removeIdFromArray(tokenId, tokenIdsByOwner[owner]);
+    function addEnumerationFor(uint256 tokenId, address owner) private {
+        uint256[] storage ids = tokenIdsByOwner[owner];
+        tokenIdsByOwnerIndexes[tokenId] = ids.length;
+        ids.push(tokenId);
     }
 
-    function removeIdFromArray(uint256 id, uint256[] storage ids) private {
-        uint256 index;
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (id == ids[i]) {
-                index = i;
-            }
-        }
-        ids[index] = ids[ids.length - 1];
-        ids.pop();
+    function removeEnumerationFor(uint256 tokenId) private {
+        removeEnumeration(tokenId, tokenIds, tokenIdsIndexes);
+    }
+
+    function removeEnumerationFor(uint256 tokenId, address owner) private {
+        removeEnumeration(
+            tokenId,
+            tokenIdsByOwner[owner],
+            tokenIdsByOwnerIndexes
+        );
+    }
+
+    // Removes id from array by swapping it for the last element and removing its index
+    function removeEnumeration(
+        uint256 id,
+        uint256[] storage array,
+        mapping(uint256 => uint256) storage indexes
+    ) private {
+        array[indexes[id]] = array[array.length - 1];
+        array.pop();
+        delete indexes[id];
     }
 }
