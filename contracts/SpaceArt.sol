@@ -22,6 +22,9 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     mapping(uint256 => string) private tokenUris;
 
+    using Counters for Counters.Counter;
+    Counters.Counter private tokenIdCounter;
+
     // For enumeration
     uint256[] private tokenIds;
     mapping(uint256 => uint256) private tokenIdsIndexes;
@@ -29,13 +32,10 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     mapping(uint256 => uint256) private tokenIdsByOwnerIndexes;
     //
 
-    using Counters for Counters.Counter;
-    Counters.Counter private tokenIdCounter;
     uint256 private constant MAX_TOKENS = 7;
+    address private constant ZERO_ADDRESS = address(0);
 
     /** TODO
-        - review destroy
-        - refactors
         - tests
         - redeploy to rinkeby
      */
@@ -48,25 +48,34 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         uint256 tokenId = tokenIdCounter.current();
         require(tokenId < MAX_TOKENS, "All tokens already created");
         address owner = msg.sender;
+
         balances[owner]++;
         owners[tokenId] = owner;
         tokenUris[tokenId] = tokenUri;
+
         addEnumerationFor(tokenId);
         addEnumerationFor(tokenId, owner);
+
         tokenIdCounter.increment();
-        emit Transfer(address(0), owner, tokenId);
+        emit Transfer(ZERO_ADDRESS, owner, tokenId);
     }
 
     function destroy(uint256 tokenId) external {
         address owner = ownerOf(tokenId);
-        require(owner == msg.sender, "Only owner can destroy its NFT");
+        require(
+            canManageToken(tokenId, owner, msg.sender),
+            "Not authorized to destroy NFT"
+        );
+
         balances[owner]--;
-        owners[tokenId] = address(0);
-        approvedAddresses[tokenId] = address(0);
-        tokenUris[tokenId] = "";
+        delete owners[tokenId];
+        delete tokenUris[tokenId];
+        _approve(tokenId, owner, ZERO_ADDRESS);
+
         removeEnumerationFor(tokenId);
         removeEnumerationFor(tokenId, owner);
-        emit Transfer(owner, address(0), tokenId);
+
+        emit Transfer(owner, ZERO_ADDRESS, tokenId);
     }
 
     function name() external pure returns (string memory) {
@@ -83,13 +92,13 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function balanceOf(address owner) public view returns (uint256 balance) {
-        require(owner != address(0), "Invalid address");
+        require(owner != ZERO_ADDRESS, "Invalid address");
         return balances[owner];
     }
 
     function ownerOf(uint256 tokenId) public view returns (address owner) {
         owner = owners[tokenId];
-        require(owner != address(0), "NFT is not valid");
+        require(owner != ZERO_ADDRESS, "NFT is not valid");
     }
 
     function safeTransferFrom(
@@ -116,20 +125,17 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     ) public {
         address owner = ownerOf(tokenId);
         require(
-            msg.sender == owner ||
-                isApprovedForAll(owner, msg.sender) ||
-                getApproved(tokenId) == msg.sender,
+            canManageToken(tokenId, owner, msg.sender),
             "Sender is not authorized to make a transfer"
         );
         require(from == owner, "From address must be the NFT owner");
-        require(to != address(0), "Invalid address");
+        require(to != ZERO_ADDRESS, "Invalid address");
 
         owners[tokenId] = to;
         balances[from]--;
         balances[to]++;
 
-        approvedAddresses[tokenId] = address(0);
-        emit Approval(owner, address(0), tokenId);
+        _approve(tokenId, owner, to);
 
         removeEnumerationFor(tokenId, owner);
         addEnumerationFor(tokenId, to);
@@ -143,12 +149,11 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
             msg.sender == owner || isApprovedForAll(owner, msg.sender),
             "Sender is not owner nor operator"
         );
-        approvedAddresses[tokenId] = to;
-        emit Approval(owner, to, tokenId);
+        _approve(tokenId, owner, to);
     }
 
     function setApprovalForAll(address operator, bool _approved) external {
-        require(operator != address(0), "Invalid address"); // not in the 721 spec
+        require(operator != ZERO_ADDRESS, "Invalid address"); // not in the 721 spec
         operators[msg.sender][operator] = _approved;
         emit ApprovalForAll(msg.sender, operator, _approved);
     }
@@ -228,6 +233,26 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     function validate(uint256 tokenId) private view {
         ownerOf(tokenId);
+    }
+
+    function _approve(
+        uint256 tokenId,
+        address owner,
+        address to
+    ) private {
+        approvedAddresses[tokenId] = to;
+        emit Approval(owner, to, tokenId);
+    }
+
+    function canManageToken(
+        uint256 tokenId,
+        address owner,
+        address addr
+    ) private view returns (bool) {
+        return
+            addr == owner ||
+            isApprovedForAll(owner, addr) ||
+            getApproved(tokenId) == addr;
     }
 
     function declareSupportedInterfaces() private {
