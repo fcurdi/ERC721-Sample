@@ -44,9 +44,9 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         declareSupportedInterfaces();
     }
 
-    function create(string calldata tokenUri) external {
+    function mint(string calldata tokenUri) external {
         uint256 tokenId = tokenIdCounter.current();
-        require(tokenId < MAX_TOKENS, "All tokens already created");
+        require(tokenId < MAX_TOKENS, "All tokens already minted");
         address owner = msg.sender;
 
         balances[owner]++;
@@ -60,11 +60,11 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         emit Transfer(ZERO_ADDRESS, owner, tokenId);
     }
 
-    function destroy(uint256 tokenId) external {
+    function burn(uint256 tokenId) external {
         address owner = ownerOf(tokenId);
         require(
             canManageToken(tokenId, owner, msg.sender),
-            "Not authorized to destroy NFT"
+            "Not authorized to burn NFT"
         );
 
         balances[owner]--;
