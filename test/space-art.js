@@ -79,8 +79,8 @@ contract("SpaceArt", async (accounts) => {
       it("Not authorized", async () => {
         // TODO
       });
-      it("Invalid tokenId", async () => {
-        // TODO
+      it("should revert when trying to burn an invalid tokenId", async () => {
+        await expectRevert(spaceArt.burn(5), "NFT is not valid");
       });
       it("should burn token successfully", async () => {
         await spaceArt.mint("other.uri", { from: firstAccount });
@@ -112,7 +112,56 @@ contract("SpaceArt", async (accounts) => {
       });
     });
     describe("Transfer", async () => {});
-    describe("Approval", async () => {});
+    describe("Approval", async () => {
+      // TODO more cases
+      it("should revert when trying to approve an invalid tokenId", async () => {
+        await expectRevert(
+          spaceArt.approve(secondAccount, 5, { from: firstAccount }),
+          "NFT is not valid"
+        );
+      });
+      it("should approve address to manage tokenId", async () => {
+        const tokenId = tokenIdFrom(
+          await spaceArt.mint("some.url", { from: firstAccount })
+        );
+        const previousApprovedAddress = await spaceArt.getApproved(tokenId);
+        const receipt = await spaceArt.approve(secondAccount, tokenId, {
+          from: firstAccount,
+        });
+
+        expect(previousApprovedAddress).to.equal(ZERO_ADDRESS);
+        expect(await spaceArt.getApproved(tokenId)).to.equal(secondAccount);
+        expect(await spaceArt.ownerOf(tokenId)).to.equal(firstAccount);
+        expectEvent(receipt, "Approval", {
+          owner: firstAccount,
+          approved: secondAccount,
+          tokenId,
+        });
+      });
+      it("should approve address to manage all tokens", async () => {
+        const initApprovedForAll = await spaceArt.isApprovedForAll(
+          firstAccount,
+          secondAccount
+        );
+        await spaceArt.setApprovalForAll(secondAccount, true, {
+          from: firstAccount,
+        });
+        const afterApproveForAll = await spaceArt.isApprovedForAll(
+          firstAccount,
+          secondAccount
+        );
+        await spaceArt.setApprovalForAll(secondAccount, false, {
+          from: firstAccount,
+        });
+        const afetDisapproveForAll = await spaceArt.isApprovedForAll(
+          firstAccount,
+          secondAccount
+        );
+        expect(initApprovedForAll).to.be.false;
+        expect(afterApproveForAll).to.be.true;
+        expect(afetDisapproveForAll).to.be.false;
+      });
+    });
   });
 
   describe("IERC165 implementation", async () => {
