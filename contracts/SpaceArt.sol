@@ -135,7 +135,7 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         balances[from]--;
         balances[to]++;
 
-        _approve(tokenId, owner, to);
+        _approve(tokenId, owner, ZERO_ADDRESS);
 
         removeEnumerationFor(tokenId, owner);
         addEnumerationFor(tokenId, to);
