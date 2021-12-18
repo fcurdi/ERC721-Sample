@@ -1,14 +1,14 @@
 {
-    "name": "truffle-project",
-    "dependencies": {
-        "@openzeppelin/contracts": "^4.3.2",
-        "axios": "^0.24.0",
-        "chai": "^4.3.4",
-        "dotenv": "^10.0.0",
-        "truffle-hdwallet-provider": "^1.0.17",
-        "web3": "^1.6.1"
-    },
-    "devDependencies": {
-        "@openzeppelin/test-helpers": "^0.5.15"
-    }
+  "name": "truffle-project",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "axios": "^0.24.0",
+    "chai": "^4.3.4",
+    "dotenv": "^10.0.0",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.6.1"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15"
+  }
 }
