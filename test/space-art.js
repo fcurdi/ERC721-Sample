@@ -23,7 +23,8 @@ contract("SpaceArt", async (accounts) => {
   // misc
   const zero = new BN(0),
     one = new BN(1),
-    two = new BN(2);
+    two = new BN(2),
+    three = new BN(3);
   const maxTokens = 7;
   const invalidTokenId = maxTokens + 1;
   const tokenURI = "uri",
@@ -493,9 +494,106 @@ contract("SpaceArt", async (accounts) => {
   });
 
   describe("IERC721Enumerable implementation", () => {
-    it("TODO", async () => {
-      // TODO tests.
-      // TODO add asserts to other tests that modify the enumerable state?
+    let tokenId1, tokenId2, tokenId3;
+    beforeEach(async () => {
+      tokenId1 = tokenIdFrom(await spaceArt.mint(tokenURI, { from: owner }));
+      tokenId2 = tokenIdFrom(
+        await spaceArt.mint(otherTokenURI, { from: owner })
+      );
+      tokenId3 = tokenIdFrom(
+        await spaceArt.mint(anotherTokenURI, { from: anotherOwner })
+      );
+    });
+    const shouldEnumerateCorrectlyAfterTransfer = async (
+      transferFunction,
+      data
+    ) => {
+      if (data) {
+        await transferFunction(owner, anotherOwner, tokenId2, data, {
+          from: owner,
+        });
+      } else {
+        await transferFunction(owner, anotherOwner, tokenId2, {
+          from: owner,
+        });
+      }
+      expect(await spaceArt.totalSupply()).to.be.a.bignumber.that.equals(three);
+      expect(await spaceArt.tokenByIndex(zero)).to.be.a.bignumber.that.equals(
+        tokenId1
+      );
+      expect(await spaceArt.tokenByIndex(one)).to.be.a.bignumber.that.equals(
+        tokenId2
+      );
+      expect(await spaceArt.tokenByIndex(two)).to.be.a.bignumber.that.equals(
+        tokenId3
+      );
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(owner, zero)
+      ).to.be.a.bignumber.that.equals(tokenId1);
+      await expectRevert(
+        spaceArt.tokenOfOwnerByIndex(owner, one),
+        "Invalid index for owner"
+      );
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(anotherOwner, zero)
+      ).to.be.a.bignumber.that.equals(tokenId3);
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(anotherOwner, one)
+      ).to.be.a.bignumber.that.equals(tokenId2);
+    };
+    it("should enumerate tokens correctly after minting", async () => {
+      expect(await spaceArt.totalSupply()).to.be.a.bignumber.that.equals(three);
+      expect(await spaceArt.tokenByIndex(zero)).to.be.a.bignumber.that.equals(
+        tokenId1
+      );
+      expect(await spaceArt.tokenByIndex(one)).to.be.a.bignumber.that.equals(
+        tokenId2
+      );
+      expect(await spaceArt.tokenByIndex(two)).to.be.a.bignumber.that.equals(
+        tokenId3
+      );
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(owner, zero)
+      ).to.be.a.bignumber.that.equals(tokenId1);
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(owner, one)
+      ).to.be.a.bignumber.that.equals(tokenId2);
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(anotherOwner, zero)
+      ).to.be.a.bignumber.that.equals(tokenId3);
+    });
+    it("should enumerate tokens correctly after burning", async () => {
+      await spaceArt.burn(tokenId1, { from: owner });
+      await spaceArt.burn(tokenId3, { from: anotherOwner });
+      expect(await spaceArt.totalSupply()).to.be.a.bignumber.that.equals(one);
+      expect(await spaceArt.tokenByIndex(zero)).to.be.a.bignumber.that.equals(
+        tokenId2
+      );
+      await expectRevert(spaceArt.tokenByIndex(one), "Invalid index");
+      await expectRevert(spaceArt.tokenByIndex(two), "Invalid index");
+      expect(
+        await spaceArt.tokenOfOwnerByIndex(owner, zero)
+      ).to.be.a.bignumber.that.equals(tokenId2);
+      await expectRevert(
+        spaceArt.tokenOfOwnerByIndex(owner, one),
+        "Invalid index for owner"
+      );
+      await expectRevert(
+        spaceArt.tokenOfOwnerByIndex(anotherOwner, zero),
+        "Invalid index for owner"
+      );
+    });
+    it("should enumerate tokens correctly after unsafe transfer", async () => {
+      await shouldEnumerateCorrectlyAfterTransfer(spaceArt.transferFrom);
+    });
+    it("should enumerate tokens correctly after safe transfer without data", async () => {
+      await shouldEnumerateCorrectlyAfterTransfer(spaceArt.safeTransferFrom);
+    });
+    it("should enumerate tokens correctly after safe transfer with data", async () => {
+      await shouldEnumerateCorrectlyAfterTransfer(
+        spaceArt.methods["safeTransferFrom(address,address,uint256,bytes)"],
+        web3.utils.asciiToHex("some.data")
+      );
     });
   });
 });

@@ -294,8 +294,11 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         uint256[] storage array,
         mapping(uint256 => uint256) storage indexes
     ) private {
-        array[indexes[id]] = array[array.length - 1];
+        uint256 index = indexes[id];
+        uint256 swappedId = array[array.length - 1];
+        array[index] = swappedId;
         array.pop();
         delete indexes[id];
+        indexes[swappedId] = index;
     }
 }
