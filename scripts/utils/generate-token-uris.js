@@ -2,7 +2,7 @@ const { readDirs, readJsonFile, writeJsonFile } = require("./files");
 const { pinFileToIPFS, pinJSONToIPFS } = require("./ipfs");
 
 const basePath = "../../metadata";
-async function generateTokenUris() {
+async function generateTokenURIs() {
   const tokenUris = [];
   const directories = readDirs(basePath);
   for (dir of directories) {
@@ -31,4 +31,4 @@ async function generateTokenUris() {
   return tokenUris;
 }
 
-module.exports = generateTokenUris;
+module.exports = generateTokenURIs;

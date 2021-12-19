@@ -1,6 +1,6 @@
 const Web3 = require("web3");
 const SpaceArt = require("../../../build/contracts/SpaceArt.json");
-const generateTokenUris = require("../../utils/generate-token-uris");
+const generateTokenURIs = require("../../utils/generate-token-uris");
 
 module.exports = async (callback) => {
   try {
@@ -11,13 +11,13 @@ module.exports = async (callback) => {
       SpaceArt.networks[networkId].address
     );
     const accounts = await web3.eth.getAccounts();
-    const tokenUris = await generateTokenUris();
+    const tokenUris = await generateTokenURIs();
     for (const tokenUri of tokenUris) {
       const randomAccountIndex =
         Math.floor(Math.random() * 10) % accounts.length;
       const account = accounts[randomAccountIndex];
       await contract.methods
-        .create(tokenUri)
+        .mint(tokenUri)
         .send({ from: account, gas: 300000 });
     }
     await callback();

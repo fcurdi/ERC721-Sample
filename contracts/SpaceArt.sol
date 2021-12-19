@@ -35,11 +35,6 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     uint256 private constant MAX_TOKENS = 7;
     address private constant ZERO_ADDRESS = address(0);
 
-    /** TODO
-        - tests
-        - redeploy to rinkeby
-     */
-
     constructor() {
         declareSupportedInterfaces();
     }
