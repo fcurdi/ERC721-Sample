@@ -30,6 +30,9 @@ const {
   METAMASK_PK_2,
   METAMASK_PK_3,
   METAMASK_PK_4,
+  METAMASK_PK_5,
+  METAMASK_PK_6,
+  METAMASK_PK_7,
   INFURA_URL,
 } = process.env;
 
@@ -63,6 +66,9 @@ module.exports = {
           METAMASK_PK_2,
           METAMASK_PK_3,
           METAMASK_PK_4,
+          METAMASK_PK_5,
+          METAMASK_PK_6,
+          METAMASK_PK_7,
         ];
         return new HDWalletProvider(
           privateKeys,
