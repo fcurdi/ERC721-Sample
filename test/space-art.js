@@ -290,6 +290,19 @@ contract("SpaceArt", async (accounts) => {
         });
       };
       describe("Errors", () => {
+        it("should revert when to does not implement ERC721Receiver", async () => {
+          await expectRevert(
+            spaceArt.safeTransferFrom(
+              owner,
+              spaceArt.address, // this contract does not implement ERC721Receiver
+              tokenId,
+              {
+                from: owner,
+              }
+            ),
+            "To address does not implement ERC721Receiver"
+          );
+        });
         it("should revert when call to onERC721Received reverts", async () => {
           await mockERC721Receiver.mockRevertWhenCalled();
           await expectRevert(
@@ -304,7 +317,6 @@ contract("SpaceArt", async (accounts) => {
             "reverted"
           );
         });
-
         it("should revert when call to onERC721Received returns invalid result", async () => {
           await mockERC721Receiver.mockReturnInvalidValueWhenCalled();
           await expectRevert(

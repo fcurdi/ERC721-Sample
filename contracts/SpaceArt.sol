@@ -204,17 +204,28 @@ contract SpaceArt is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     ) private {
         transferFrom(from, to, tokenId);
         if (isSmartContract(to)) {
-            IERC721Receiver receiver = IERC721Receiver(to);
-            bytes4 result = receiver.onERC721Received(
-                msg.sender,
-                from,
-                tokenId,
-                data
-            );
-            require(
-                result == receiver.onERC721Received.selector,
-                "To address rejected the transfer"
-            );
+            try
+                IERC721Receiver(to).onERC721Received(
+                    msg.sender,
+                    from,
+                    tokenId,
+                    data
+                )
+            returns (bytes4 result) {
+                require(
+                    result == IERC721Receiver.onERC721Received.selector,
+                    "To address rejected the transfer"
+                );
+            } catch (bytes memory reason) {
+                if (reason.length == 0) {
+                    revert("To address does not implement ERC721Receiver");
+                } else {
+                    // read revert reason
+                    assembly {
+                        revert(add(32, reason), mload(reason))
+                    }
+                }
+            }
         }
     }
 
